@@ -1,7 +1,4 @@
-from DataGenerator import DataGenerator
-from keras.models import Model
-from keras.layers import Input, Convolution2D, MaxPooling2D, Dense, Dropout, Flatten
-import numpy as np
+
 # Generate squares and data
 D1 = DataGenerator(1)
 answers = D1.generateSquares(1)
@@ -36,11 +33,11 @@ classScores = np.asarray(classScores)
 
 num_classes = 2
 batch_size = 12
-num_epochs = 1
+num_epochs = 2
 kernel_size = 3
 pool_size =2
-conv_depth_1 = 1
-conv_depth_2 = 1
+conv_depth_1 = 5
+conv_depth_2 = 10
 hidden_size = 100
 
 inp = Input(shape=(receptiveFieldSize,receptiveFieldSize,1))

@@ -3,56 +3,84 @@ import matplotlib.pyplot as plt
 from scipy.ndimage import rotate
 from scipy import signal
 from scipy.ndimage.filters import gaussian_filter
-
+import scipy.stats as stats
 
 class DataGenerator:
 
     def __init__(self,seed):
-        np.random.seed(seed)
+        np.random.seed(int(seed))
         self.recs = 50;
-        self.image_width = 500
-        self.image_height = 500
+        imageWidth = 500
+        imageHeight = 500
         self.rec_width= 15
         self.rec_height =5
         self.theta = 360
         self.intensity = 1.0
 
-    def generateSquares(self,images=10):
+    def generateData(self, images=10, imageWidth=500,
+            imageHeight=500, recNo=10, recMinWidth=10,
+            recMaxWidth=20, recMinHeight=20, recMaxHeight=30,
+            blurr=2.0, noiseMagnitude=0.3):
+
+        squares = self.generateSquares(images=images,
+                imageWidth=imageWidth,imageHeight=imageHeight,
+                recNo=recNo,recMinWidth=recMinWidth,recMaxWidth=
+                recMaxWidth, recMinHeight=recMinHeight,
+                recMaxHeight=recMaxHeight)
+
+        blurred = self.blurr(squares,blurr=blurr)
+        noised = self.noise(blurred,
+                noiseMagnitude=noiseMagnitude)
+
+        return noised , squares
+
+
+    def generateSquares(self,images,imageWidth,imageHeight,
+            recNo, recMinWidth,recMaxWidth,recMinHeight,
+            recMaxHeight):
+        intensity = 1.0
         squares = []
         for j in range(images):
-            image = np.zeros([self.image_width,self.image_height])
-            numberOfRecs = int(self.recs*np.random.random())
+            image = np.zeros([imageWidth,imageHeight])
+            numberOfRecs = int(recNo*np.random.random())
             for i in range(numberOfRecs):
-                temp = np.zeros([self.image_width,self.image_height])
-                x_centre = min(max(round(self.image_width*np.random.random()),5),self.image_width-5)
-                y_centre = min(max(round(self.image_height*np.random.random()),5),self.image_height-5)
-                width = round(max(2*self.rec_width*(np.random.random()+0.5),5))
-                height= round(max(2*self.rec_height*(np.random.random()+0.5),5))
-                for x in range(self.image_width):
-                    for y in range(self.image_height):
+                temp = np.zeros([imageWidth,imageHeight])
+                x_centre = min(max(round(imageWidth*np.random.random()),5),imageWidth-5)
+                y_centre = min(max(round(imageHeight*np.random.random()),5),imageHeight-5)
+                width = max(round(recMaxWidth*np.random.random()),recMinWidth)
+                height= max(round(recMaxHeight*np.random.random()),recMinHeight)
+                for x in range(imageWidth):
+                    for y in range(imageHeight):
                         if x < x_centre + round(width/2.0) and x > x_centre - round(width/2.0):
                             if y < y_centre + round(height/2.0) and y > y_centre - round(height/2.0):
-                                temp[x,y] = self.intensity
-                theta = self.theta*np.random.random()
+                                temp[x,y] = intensity
+                theta = 360*np.random.random()
                 temp = rotate(temp,theta,reshape=False)
                 image = np.maximum(temp,image)
-                low_values_indices = image < 0.9*self.intensity  # Where values are low
+                low_values_indices = image < 0.9*intensity  # Where values are low
                 image[low_values_indices] = 0
-                low_values_indices = image > 0.9*self.intensity  # Where values are high
-                image[low_values_indices] = self.intensity
+                low_values_indices = image > 0.9*intensity  # Where values are high
+                image[low_values_indices] = intensity
             squares.append(image)
         return squares
 
-    def generateData(self,squares):
+    def blurr(self,images,blurr=2):
         blurred = []
+        for image in images:
+            blurred.append(gaussian_filter(image, sigma=blurr))
+        return blurred
+
+    def noise(self,images,noiseMagnitude=2.0):
         noised = []
-        for square in squares:
-            blurred.append(gaussian_filter(square, sigma=2))
-            noise = np.random.normal(0.5,0.5,self.image_height*self.image_width)
-            low_values_indices = noise < 0
-            noise[low_values_indices] = 0
-            noise = noise.reshape((self.image_width,self.image_height))
-            noised.append(blurred[-1]+noise)
+        stdev = 2.0
+        a = 0
+        b = 10
+        for image in images:
+            noise = stats.truncnorm.rvs(a,b,
+                    size=np.shape(image)[0]*np.shape(image)[1])
+            noise = noise.reshape((np.shape(image)[0],
+                    np.shape(image)[1]))
+            noised.append(image+noiseMagnitude*noise)
         return noised
 
     def displayData(self,images,delay=0.5,cmap='gray',):
@@ -63,31 +91,3 @@ class DataGenerator:
             plt.colorbar()
             plt.pause(delay)
         plt.close()
-
-    def slice(self,images,size):
-        sliced = []
-        for image in images:
-            width,height = image.shape
-            padded = np.pad(image,size,'constant')
-            for x in range(size,width+size):
-                for y in range(size,height+size):
-                    sliced.append(padded[x:x+size,y:y+size])
-        return sliced
-
-    def normaliseData(self,images):
-        normalised = []
-        for image in images:
-            normal = image - np.mean(image)
-            normalised.append(normal)
-        return normalised
-
-    def score(self,images):
-        classScores = []
-        for image in images:
-            xIndex = int(image.shape[0]/2.0)
-            yIndex = int(image.shape[1]/2.0)
-            if image[xIndex][yIndex] > 0.5:
-                classScores.append(np.asarray([1,0]))
-            else:
-                classScores.append(np.asarray([0,1]))
-        return classScores
