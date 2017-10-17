@@ -1,8 +1,12 @@
 from keras.models import Model
+from keras.models import load_model
 from keras.layers import Input, Convolution2D, MaxPooling2D
 from keras.layers import Dense, Dropout, Flatten
+from scipy.ndimage import imread
+from scipy.misc import imsave
 import sys
 import numpy as np
+import time
 
 class MachineSegmenter:
 
@@ -11,7 +15,7 @@ class MachineSegmenter:
         self.data = None
         self.answers = None
         self.scores = None
-        self.rfSize = None
+        self.rfSize = 21
 
     def defineModel(self, num_classes=2, kernel_size=3, pool_size=2,
             conv_depth_1=5, conv_depth_2=3, hidden_size=100, rfSize=21):
@@ -102,17 +106,33 @@ class MachineSegmenter:
 
     def predict(self,images):
         predictions = []
+        start = time.time()
         for image in images:
             predictImage = np.zeros(np.shape(image))
             image = self.slice([image],self.rfSize)
             image = self.normaliseData(image)
             image = np.asarray(image).reshape(len(image),self.rfSize,
                     self.rfSize,1)
+            print("Start of for loop", time.time()-start)
             predict = self.model.predict(image)
             i = 0
+            print("End of for loop", time.time()-start)
             for x in range(predictImage.shape[0]):
                 for y in range(predictImage.shape[1]):
                     predictImage[x][y] = predict[i][0]
                     i+=1
             predictions.append(predictImage)
-        return predictions
+            return predictions
+
+    def saveModel(self,path):
+        self.model.save(path)
+
+    def loadModel(self,path):
+        del self.model
+        self.model = load_model(path)
+
+    def loadImage(self,path):
+        return np.asarray(imread(path))
+
+    def saveImage(self,path,image):
+        imsave(path,image)

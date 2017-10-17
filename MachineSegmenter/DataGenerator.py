@@ -4,7 +4,6 @@ from scipy.ndimage import rotate
 from scipy import signal
 from scipy.ndimage.filters import gaussian_filter
 import scipy.stats as stats
-
 class DataGenerator:
 
     def __init__(self,seed):
@@ -18,7 +17,7 @@ class DataGenerator:
         self.intensity = 1.0
 
     def generateData(self, images=10, imageWidth=500,
-            imageHeight=500, recNo=10, recMinWidth=10,
+            imageHeight=500, recNo=20, recMinWidth=10,
             recMaxWidth=20, recMinHeight=20, recMaxHeight=30,
             blurr=2.0, noiseMagnitude=0.3):
 
