@@ -14,7 +14,7 @@ M1 = MachineSegmenter()
 if shouldLoad == 'y':
     M1.loadModel("MyModel.h5")
 else:
-    M1.defineModel(conv_depth_1 = 10, conv_depth_2=5)
+    M1.defineModel(conv_depth_1 = 1, conv_depth_2=1)
     M1.compileModel()
 
 #Train model or not
@@ -22,11 +22,11 @@ shouldTrain = raw_input("Train model? (y/n)")
 D1 = DataGenerator(1.0)
 if shouldTrain == 'y':
     #Generate Data
-    trainingData, traningAnswers = D1.generateData(images=1,recNo=20)
+    trainingData, trainingAnswers = D1.generateData(images=1,recNo=20)
     D1.displayData(trainingData,1)
     D1.displayData(trainingAnswers,1)
     #Train model
-    M1.loadTrainingData(trainingData,traningAnswers)
+    M1.loadTrainingData(trainingData,trainingAnswers)
     M1.trainModel(batch_size=10)
 
 #Run model on validation generated data
