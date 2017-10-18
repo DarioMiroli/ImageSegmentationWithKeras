@@ -23,7 +23,7 @@ class MachineSegmenter:
         inp = Input(shape=(rfSize,rfSize,1))
         conv_1 = Convolution2D(conv_depth_1,(kernel_size,kernel_size),
                 padding='same',activation='relu')(inp)
-        conv_2 = Convolution2D(conv_depth_1,(kernel_size,kernel_size),
+        '''conv_2 = Convolution2D(conv_depth_1,(kernel_size,kernel_size),
                 padding='same',activation='relu')(conv_1)
         pool_1 = MaxPooling2D(pool_size=(pool_size,pool_size))(conv_2)
         conv_3 = Convolution2D(conv_depth_2,(kernel_size,kernel_size),
@@ -31,8 +31,9 @@ class MachineSegmenter:
         conv_3 = Convolution2D(conv_depth_2,(kernel_size,kernel_size),
                 padding='same',activation='relu')(conv_3)
         conv_4 = Convolution2D(conv_depth_2, (kernel_size, kernel_size),
-                padding='same', activation='relu')(conv_3)
-        pool_2 = MaxPooling2D(pool_size=(pool_size, pool_size))(conv_4)
+                padding='same', activation='relu')(conv_3)'''
+        #print("hey hey!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+        pool_2 = MaxPooling2D(pool_size=(pool_size*2, pool_size*2))(conv_1)
         flat = Flatten()(pool_2)
         hidden = Dense(hidden_size, activation='relu')(flat)
         out = Dense(num_classes, activation='softmax')(hidden)
