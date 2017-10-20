@@ -1,5 +1,6 @@
 from MachineSegmenter import MachineSegmenter
 from DataGenerator import DataGenerator
+#from future import input
 import sys
 import os
 
@@ -9,7 +10,7 @@ outputFolder  = "./Output"
 fileNames = os.listdir(inputFolder)
 
 #Load or compile model
-shouldLoad = raw_input("Load model? (y/n)")
+shouldLoad = input("Load model? (y/n)")
 M1 = MachineSegmenter()
 if shouldLoad == 'y':
     M1.loadModel("MyModel.h5")
@@ -18,19 +19,19 @@ else:
     M1.compileModel()
 
 #Train model or not
-shouldTrain = raw_input("Train model? (y/n)")
+shouldTrain = input("Train model? (y/n)")
 D1 = DataGenerator(1.0)
 if shouldTrain == 'y':
     #Generate Data
-    trainingData, trainingAnswers = D1.generateData(images=1,recNo=20)
-    D1.displayData(trainingData,1)
-    D1.displayData(trainingAnswers,1)
+    trainingData, trainingAnswers = D1.generateData(images=5,recNo=20)
+    #D1.displayData(trainingData,1)
+    #D1.displayData(trainingAnswers,1)
     #Train model
     M1.loadTrainingData(trainingData,trainingAnswers)
-    M1.trainModel(batch_size=10)
+    M1.trainModel(batch_size=256, num_epochs=2)
 
 #Run model on validation generated data
-shouldValidate = raw_input("\nValidate model on a fresh set of generated data?")
+shouldValidate = input("\nValidate model on a fresh set of generated data?")
 if shouldValidate == 'y':
     validationData , _ = D1.generateData(images=1,recNo = 20)
     validationPredicts = M1.predict(validationData)
@@ -38,7 +39,7 @@ if shouldValidate == 'y':
     D1.displayData(validationPredicts, delay=3)
 
 #Run model on images
-shouldTest = raw_input("Test model on images in input folder? (y/n)")
+shouldTest = input("Test model on images in input folder? (y/n)")
 if shouldTest == 'y':
     imagePredictions = []
     images = []
@@ -51,12 +52,12 @@ if shouldTest == 'y':
     D1.displayData(imagePredictions,5)
 
     #save images
-    shouldSaveImages = raw_input("Save images to output folder? (y/n)")
+    shouldSaveImages = input("Save images to output folder? (y/n)")
     if shouldSaveImages == 'y':
         for i, image in enumerate(imagePredictions):
             M1.saveImage(os.path.join(outputFolder,fileNames[i]),image)
 
 #Save model
-shouldSave = raw_input("Save model? (y/n)")
+shouldSave = input("Save model? (y/n)")
 if shouldSave == 'y':
     M1.saveModel("MyModel.h5")
