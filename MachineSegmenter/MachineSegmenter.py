@@ -7,6 +7,7 @@ from scipy.misc import imsave
 import sys
 import numpy as np
 import time
+import gc
 
 class MachineSegmenter:
 
@@ -71,10 +72,12 @@ class MachineSegmenter:
             data = np.asarray(self.data).reshape(len(self.data),self.rfSize,self.rfSize,1)
             scores = np.asarray(self.scores)
             self.model.fit(data, scores, batch_size=batch_size,
-                    epochs=num_epochs, verbose =1)
+                    epochs=num_epochs, validation_split=0.2, verbose =1)
         else:
             print("Error data or answers not initialised!")
             sys.exit(0)
+        self.data = None
+        self.answers = None
 
     def slice(self,images,rfSize):
         sliced = []
@@ -113,10 +116,10 @@ class MachineSegmenter:
             image = self.normaliseData(image)
             image = np.asarray(image).reshape(len(image),self.rfSize,
                     self.rfSize,1)
-            print("Start of for loop", time.time()-start)
+            print("Starting Prediction", time.time()-start)
             predict = self.model.predict(image)
             i = 0
-            print("End of for loop", time.time()-start)
+            print("Prediction complete", time.time()-start)
             for x in range(predictImage.shape[0]):
                 for y in range(predictImage.shape[1]):
                     predictImage[x][y] = predict[i][0]

@@ -4,6 +4,7 @@ from scipy.ndimage import rotate
 from scipy import signal
 from scipy.ndimage.filters import gaussian_filter
 import scipy.stats as stats
+from scipy.misc import imsave
 class DataGenerator:
 
     def __init__(self,seed):
@@ -90,3 +91,6 @@ class DataGenerator:
             plt.colorbar()
             plt.pause(delay)
         plt.close()
+
+    def saveImage(self,path,image):
+        imsave(path,image)

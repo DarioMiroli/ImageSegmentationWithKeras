@@ -3,6 +3,10 @@ from DataGenerator import DataGenerator
 import sys
 import os
 
+useGPU = raw_input("Use GPU device? (y/n)")
+if not useGPU == "y":
+    os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
+
 #Deal with input output folders
 inputFolder = "./Images"
 outputFolder  = "./Output"
@@ -22,12 +26,12 @@ shouldTrain = raw_input("Train model? (y/n)")
 D1 = DataGenerator(1.0)
 if shouldTrain == 'y':
     #Generate Data
-    trainingData, trainingAnswers = D1.generateData(images=1,recNo=20)
+    trainingData, trainingAnswers = D1.generateData(images=4,recNo=20)
     D1.displayData(trainingData,1)
     D1.displayData(trainingAnswers,1)
     #Train model
     M1.loadTrainingData(trainingData,trainingAnswers)
-    M1.trainModel(batch_size=10)
+    M1.trainModel(batch_size=10000,num_epochs=1)
 
 #Run model on validation generated data
 shouldValidate = raw_input("\nValidate model on a fresh set of generated data?")
