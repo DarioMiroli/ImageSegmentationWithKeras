@@ -38,12 +38,13 @@ class DataGenerator:
     def generateSquares(self,images,imageWidth,imageHeight,
             recNo, recMinWidth,recMaxWidth,recMinHeight,
             recMaxHeight):
-        intensity = 1.0
+        #intensity = 1.0
         squares = []
         for j in range(images):
             image = np.zeros([imageWidth,imageHeight])
             numberOfRecs = int(recNo*np.random.random())
             for i in range(numberOfRecs):
+                intensity = np.random.random()*1
                 temp = np.zeros([imageWidth,imageHeight])
                 x_centre = min(max(round(imageWidth*np.random.random()),5),imageWidth-5)
                 y_centre = min(max(round(imageHeight*np.random.random()),5),imageHeight-5)
@@ -56,11 +57,13 @@ class DataGenerator:
                                 temp[x,y] = intensity
                 theta = 360*np.random.random()
                 temp = rotate(temp,theta,reshape=False)
-                image = np.maximum(temp,image)
-                low_values_indices = image < 0.9*intensity  # Where values are low
-                image[low_values_indices] = 0
-                low_values_indices = image > 0.9*intensity  # Where values are high
-                image[low_values_indices] = intensity
+                #image = np.maximum(temp,image)
+                low_values_indices = temp < 0.9*intensity  # Where values are low
+                temp[low_values_indices] = 0
+                low_values_indices = temp > 0.9*intensity  # Where values are high
+                temp[low_values_indices] = intensity
+                image = image + temp
+
             squares.append(image)
         return squares
 
