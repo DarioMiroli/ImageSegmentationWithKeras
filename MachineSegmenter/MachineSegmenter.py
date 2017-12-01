@@ -73,7 +73,7 @@ class MachineSegmenter:
                     self.rfSize,1)
             scores = np.asarray(self.scores,dtype='uint16')
             self.model.fit(data, scores, batch_size=batch_size,
-                    epochs=num_epochs, validation_split=0.2, verbose =1)
+                    epochs=num_epochs, validation_split=0, verbose =1)
         else:
             print("Error data or answers not initialised!")
             sys.exit(0)
@@ -113,11 +113,11 @@ class MachineSegmenter:
                 classScores.append(np.asarray([0,1]))
         return classScores
 
-    def predict(self,images):
+    def predict(self,images,threshold=False,thresh=0.9):
         predictions = []
         start = time.time()
         for image in images:
-            predictImage = np.zeros(np.shape(image))
+            predictImage = np.zeros(np.shape(image),dtype='float16')
             image = self.normaliseData([image])
             image = self.slice(image,self.rfSize)
             image = np.asarray(image).reshape(len(image),self.rfSize,
@@ -130,6 +130,9 @@ class MachineSegmenter:
                 for y in range(predictImage.shape[1]):
                     predictImage[x][y] = predict[i][0]
                     i+=1
+            if threshold:
+                predictImage[predictImage>=0.9*thresh] = 1
+                predictImage[predictImage<0.9*thresh] = 0
             predictions.append(predictImage)
             return predictions
 
