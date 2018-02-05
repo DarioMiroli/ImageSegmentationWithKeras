@@ -20,16 +20,16 @@ outputFolder = "Files/Output"
 dataNames = sorted(os.listdir(folderData))
 answerNames = sorted(os.listdir(folderAnswers))
 validateNames = sorted(os.listdir(folderValidate))
-for i in range(len(dataNames)):
+for i in range(len(dataNames)-1):
     #Train model
     trainingData = M1.loadImage(os.path.join(folderData,dataNames[i]))
     trainingAnswers = M1.loadImage(os.path.join(folderAnswers,answerNames[i]))
     #Threshold training Answers
     trainingAnswers[trainingAnswers>0] = 1
     M1.loadTrainingData([trainingData],[trainingAnswers])
-    M1.trainModel(batch_size=1000,num_epochs=3)
+    M1.trainModel(batch_size=1000,num_epochs=1)
 
-M1.saveModel("Files/Models/TempModels/TempModel1.h5")
+M1.saveModel("Files/Models/TempModels/MotherMachineTempModel1.h5")
 output = M1.predict([trainingData],threshold=True)
 shouldLoad = raw_input("Ready to see data? (Y)")
 D1.displayData([trainingData],delay=3)

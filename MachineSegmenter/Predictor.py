@@ -7,7 +7,7 @@ import os
 
 os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
 M1 = MachineSegmenter()
-M1.loadModel("./Files/Models/TempModels/TempModel1.h5")
+M1.loadModel("./Files/Models/TempModels/MotherMachineTempModel1.h5")
 M1.compileModel()
 D1 = DataGenerator(1.0)
 folderValidate = "Files/Input/Images"
@@ -19,7 +19,7 @@ images = []
 for f in validateNames[2:4]:
     image = M1.loadImage(os.path.join(folderValidate,f))
     images.append(image)
-    imagePredictions = imagePredictions + M1.predict([image],threshold=False,thresh=0.01)
+    imagePredictions = imagePredictions + M1.predict([image],threshold=True,thresh=0.5)
 D1.displayData(images,3)
 D1.displayData(imagePredictions,5)
 
