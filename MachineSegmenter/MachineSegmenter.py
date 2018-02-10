@@ -72,8 +72,9 @@ class MachineSegmenter:
             data = np.asarray(self.data,dtype='uint16').reshape(len(self.data),self.rfSize,
                     self.rfSize,1)
             scores = np.asarray(self.scores,dtype='uint16')
+            print(fullData.shape)
             self.model.fit(data, scores, batch_size=batch_size,
-                    epochs=num_epochs, validation_split=0, verbose =1)
+                    epochs=num_epochs, validation_split=0.1, verbose =1)
         else:
             print("Error data or answers not initialised!")
             sys.exit(0)

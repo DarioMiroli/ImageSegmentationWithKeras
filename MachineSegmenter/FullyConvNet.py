@@ -277,6 +277,8 @@ class FullyConvNet:
         else:
             print("Error: Only data or answers have been initialised")
             sys.exit(0)
+        self.fullData = None
+        self.fullScores = None
 
     def trainModel(self,batch_size=2, num_epochs=1):
         if self.data != None and self.answers != None and self.scores !=None:
@@ -286,14 +288,40 @@ class FullyConvNet:
             scores = np.swapaxes(scores,1,3 )
             #hmmmm not sure about this next line
             scores = np.swapaxes(scores,1,2 )
+
+            if self.fullData == None or self.fullScores == None:
+                fullData, fullScores = self.increaseData(data, scores)
+
             #early_stopping = EarlyStopping(monitor='loss', patience=3)
-            self.model.fit(data, scores, batch_size=batch_size,
-                    epochs=num_epochs, validation_split=0, verbose =1)
+            self.model.fit(fullData, fullScores, batch_size=batch_size,
+                    epochs=num_epochs, validation_split=0.1, verbose =1)
         else:
             print("Error data or answers not initialised!")
             sys.exit(0)
         #self.data = None
         #self.answers = None
+
+    def increaseData(self, data, scores):
+        fullData = np.zeros((data.shape[0]*12, data.shape[1], data.shape[2], data.shape[3]))
+        fullScores = np.zeros((scores.shape[0]*12, scores.shape[1], scores.shape[2], scores.shape[3]))
+        for i in range(data.shape[0]):
+            im = data[i]
+            ans = scores[i]
+            for j in range(4):
+                index = (i*12)+(j*3)
+                #Rotate data and take mirror of all rotations
+                dat = np.rot90(im, j)
+                fullData[index] = dat
+                fullData[index+1] = np.flipud(dat)
+                fullData[index+2] = np.fliplr(dat)
+
+                #Add relevant labels
+                lab = np.rot90(ans, j)
+                fullScores[index] = lab
+                fullScores[index+1] = np.flipud(lab)
+                fullScores[index+2] = np.fliplr(lab)
+
+        return fullData, fullScores
 
     def predict(self,images,threshold=False,thresh=0.9):
         predictions = []

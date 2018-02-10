@@ -35,7 +35,7 @@ D1.displayData(trainingAnswers,delay=0.5)
 
 epochs = int(input("Epochs to train?"))
 while epochs >0:
-    M1.trainModel(batch_size=8,num_epochs=epochs)
+    M1.trainModel(batch_size=1,num_epochs=epochs)
     #M1.saveModel("Files/Models/TempModels/MotherMachineTempModel1.h5")
     output = M1.predict(trainingData,threshold=False)
     shouldLoad = input("Ready to see data? (Y)")
