@@ -15,6 +15,7 @@ fileNames = os.listdir(inputFolder)
 #Load or compile model
 shouldLoad = raw_input("Load model? (y/n)")
 M1 = FullyConvNet(1024,1024)
+
 if shouldLoad == 'y':
     M1.loadModel("MyModel.h5")
 else:

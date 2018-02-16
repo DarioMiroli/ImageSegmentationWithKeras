@@ -1,21 +1,23 @@
+import numpy as np
+import matplotlib.pyplot as plt
 from keras.models import Model
 from keras.models import load_model
 from keras.layers import Input, Convolution2D, MaxPooling2D
-from keras.layers import Dense, Dropout, Flatten, BatchNormalization, Conv2DTranspose, UpSampling2D, Add, Concatenate
+from keras.layers import Dense, Dropout, Flatten, BatchNormalization
+from keras.layers import Conv2DTranspose, UpSampling2D, Add, Concatenate
 from keras.callbacks import EarlyStopping
 from scipy.ndimage import imread
 from scipy.misc import imsave
+from  Tkinter import *
+import Tkinter, Tkconstants, tkFileDialog
 import sys
-import numpy as np
+import os
 import time
 import gc
 
-#Delete these
-import matplotlib.pyplot as plt
-
 class FullyConvNet:
 
-    def __init__(self,imageWidth,imageHeight):
+    def __init__(self,imageWidth,imageHeight,useGPU):
         self.width = imageWidth
         self.height = imageHeight
         self.noClasses = 2
@@ -23,42 +25,40 @@ class FullyConvNet:
         self.data = None
         self.answers = None
         self.scores = None
+        if not useGPU:
+            os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
 
-    def downBlock(self, layer, kernel_size, depth):
+    def downBlock(self, layer, kernel_size, depth, repeat = 3):
         l1 = layer
-        for i in range(3):
+        for i in range(repeat):
             conv_layer = Convolution2D(depth,(kernel_size,kernel_size),
                     padding='same',activation='relu')(l1)
             norm_layer = BatchNormalization(momentum=0.99)(conv_layer)
         down_pool = MaxPooling2D(pool_size=(2, 2), strides=2)(norm_layer)
         return norm_layer, down_pool
 
-    def upBlock(self, layer, concat_layer, kernel_size, depth):
+    def upBlock(self, layer, concat_layer, kernel_size, depth, repeat=3):
         upConvolve_layer = Conv2DTranspose(depth, (kernel_size,kernel_size),
                 strides=2, padding='same')(layer)
         concatenated_layer = Concatenate()([concat_layer, upConvolve_layer])
         norm_layer = BatchNormalization(momentum=0.99)(concatenated_layer)
-        for i in range(3):
+        for i in range(repeat):
             conv_layer = Convolution2D(depth,(kernel_size,kernel_size),
                     padding='same',activation='relu')(norm_layer)
             norm_layer = BatchNormalization(momentum=0.99)(conv_layer)
         return norm_layer
 
-
-
     def defineModel(self,kernel_size=3):
             filterDepthsIn = [16,32,64]
             filterDepthsOut = filterDepthsIn[::-1]
-
+            #Input layer
             input_layer = Input(shape=(self.width,self.height,1))
-
             #Encoding network
             concatenated_layers = []
             l1 = input_layer
             for level in filterDepthsIn:
                 conc, l1 = self.downBlock(l1,kernel_size,level)
                 concatenated_layers.append(conc)
-
             #Decoder network
             concatenated_layers.reverse()
 
@@ -68,207 +68,19 @@ class FullyConvNet:
             output_Layer = Convolution2D(1,(1,1), padding='same',activation='sigmoid')(l1)
             self.model = Model(inputs=input_layer, outputs=output_Layer)
 
-
-            #filterDepths = np.asarray([4,8,16,32,64,128,250])
-            #filterDepths = filterDepths*2
-            #inp = Input(shape=(self.width,self.height,1))
-
-            #Encoder network
-            # 3 convolve and down 1
-            #conv_1 = Convolution2D(filterDepths[0],(kernel_size,kernel_size),
-            #        padding='same',activation='relu')(inp)
-            #norm_1 = BatchNormalization(momentum=0.99)(conv_1)
-            #
-            #conv_2 = Convolution2D(filterDepths[0],(kernel_size,kernel_size),
-            #        padding='same',activation='relu')(norm_1)
-            #norm_2 = BatchNormalization(momentum=0.99)(conv_2)
-
-            #conv_3 = Convolution2D(filterDepths[0],(kernel_size,kernel_size),
-            #        padding='same',activation='relu')(norm_2)
-            #norm_3 = BatchNormalization(momentum=0.99)(conv_3)
-
-            #pool_1 = MaxPooling2D(pool_size=(2, 2), strides=2)(norm_3)
-
-            # 3 convolve and down 2
-            #conv_4 = Convolution2D(filterDepths[1],(kernel_size,kernel_size),
-            #        padding='same',activation='relu')(pool_1)
-            #norm_4 = BatchNormalization(momentum=0.99)(conv_4)
-
-            #conv_5 = Convolution2D(filterDepths[1],(kernel_size,kernel_size),
-            #        padding='same',activation='relu')(norm_4)
-            #norm_5 = BatchNormalization(momentum=0.99)(conv_5)
-
-            #conv_6 = Convolution2D(filterDepths[1],(kernel_size,kernel_size),
-            #        padding='same',activation='relu')(norm_5)
-            #norm_6 = BatchNormalization(momentum=0.99)(conv_6)
-
-            #pool_2 = MaxPooling2D(pool_size=(2, 2), strides=2)(norm_6)
-
-            #3 convolve and down 3
-            #conv_7 = Convolution2D(filterDepths[2],(kernel_size,kernel_size),
-            #        padding='same',activation='relu')(pool_2)
-            #norm_7 = BatchNormalization(momentum=0.99)(conv_7)
-
-            #conv_8 = Convolution2D(filterDepths[2],(kernel_size,kernel_size),
-            #        padding='same',activation='relu')(norm_7)
-            #norm_8 = BatchNormalization(momentum=0.99)(conv_8)
-
-            #conv_9 = Convolution2D(filterDepths[2],(kernel_size,kernel_size),
-            #        padding='same',activation='relu')(norm_8)
-            #norm_9 = BatchNormalization(momentum=0.99)(conv_9)
-
-            #pool_3 = MaxPooling2D(pool_size=(2, 2), strides=2)(norm_9)
-
-            #3 convolve and down 4
-            #conv_10 = Convolution2D(filterDepths[3],(kernel_size,kernel_size),
-            #        padding='same',activation='relu')(pool_3)
-            #norm_10 = BatchNormalization(momentum=0.99)(conv_10)
-
-            #conv_11 = Convolution2D(filterDepths[3],(kernel_size,kernel_size),
-            #        padding='same',activation='relu')(norm_10)
-            #norm_11 = BatchNormalization(momentum=0.99)(conv_11)
-
-            #conv_12 = Convolution2D(filterDepths[3],(kernel_size,kernel_size),
-            #        padding='same',activation='relu')(norm_11)
-            #norm_12 = BatchNormalization(momentum=0.99)(conv_12)
-
-            #pool_4 = MaxPooling2D(pool_size=(2, 2), strides=2)(norm_12)
-
-            #3 convolve and down 5
-            #conv_13 = Convolution2D(filterDepths[4],(kernel_size,kernel_size),
-            #        padding='same',activation='relu')(pool_4)
-            #norm_13 = BatchNormalization(momentum=0.99)(conv_13)
-
-            #conv_14 = Convolution2D(filterDepths[4],(kernel_size,kernel_size),
-            #        padding='same',activation='relu')(norm_13)
-            #norm_14 = BatchNormalization(momentum=0.99)(conv_14)
-
-            #conv_15 = Convolution2D(filterDepths[4],(kernel_size,kernel_size),
-            #        padding='same',activation='relu')(norm_14)
-            #norm_15 = BatchNormalization(momentum=0.99)(conv_15)
-
-            #pool_5 = MaxPooling2D(pool_size=(2, 2), strides=2)(norm_15)
-
-            #3 convolve Across
-            #conv_16 = Convolution2D(filterDepths[5],(kernel_size,kernel_size),
-            #        padding='same',activation='relu')(pool_5)
-            #norm_16 = BatchNormalization(momentum=0.99)(conv_16)
-
-            #conv_17 = Convolution2D(filterDepths[5],(kernel_size,kernel_size),
-            #        padding='same',activation='relu')(norm_16)
-            #norm_17 = BatchNormalization(momentum=0.99)(conv_17)
-
-            #conv_18 = Convolution2D(filterDepths[5],(kernel_size,kernel_size),
-            #        padding='same',activation='relu')(norm_17)
-            #norm_18 = BatchNormalization(momentum=0.99)(conv_18)
-
-
-
-
-            #Decoder network
-
-            #Up pool concatenate and covolve twice. 1
-            #upPool_1 = UpSampling2D()(norm_18)
-            #merge_1 = Concatenate()([upPool_1, norm_15])
-
-            #deConv_1 = Conv2DTranspose(filterDepths[4],(kernel_size,kernel_size),
-            #        padding="same",activation = 'relu')(merge_1)
-            #norm_19 = BatchNormalization(momentum=0.99)(deConv_1)
-
-            #deConv_2 = Conv2DTranspose(filterDepths[4],(kernel_size,kernel_size),
-            #        padding="same",activation = 'relu')(norm_19)
-            #norm_20 = BatchNormalization(momentum=0.99)(deConv_2)
-
-            #deConv_3 = Conv2DTranspose(filterDepths[4],(kernel_size,kernel_size),
-            #        padding="same",activation = 'relu')(norm_20)
-            #norm_21 = BatchNormalization(momentum=0.99)(deConv_3)
-
-            #Up pool concatenate and covolve twice. 2
-            #upPool_2 = UpSampling2D()(norm_21)
-            #merge_2 = Concatenate()([upPool_2, norm_12])
-
-            #deConv_4 = Conv2DTranspose(filterDepths[3],(kernel_size,kernel_size),
-            #        padding="same",activation = 'relu')(merge_2)
-            #norm_22 = BatchNormalization(momentum=0.99)(deConv_4)
-
-            #deConv_5 = Conv2DTranspose(filterDepths[3],(kernel_size,kernel_size),
-            #        padding="same",activation = 'relu')(norm_22)
-            #norm_23 = BatchNormalization(momentum=0.99)(deConv_5)
-
-            #deConv_6 = Conv2DTranspose(filterDepths[3],(kernel_size,kernel_size),
-            #        padding="same",activation = 'relu')(norm_23)
-            #norm_24 = BatchNormalization(momentum=0.99)(deConv_6)
-
-            #Up pool concatenate and covolve twice. 3
-            #upPool_3 = UpSampling2D()(norm_24)
-            #merge_3 = Concatenate()([upPool_3, norm_9])
-
-            #deConv_7 = Conv2DTranspose(filterDepths[2],(kernel_size,kernel_size),
-            #        padding="same",activation = 'relu')(merge_3)
-            #norm_25 = BatchNormalization(momentum=0.99)(deConv_7)
-
-            #deConv_8 = Conv2DTranspose(filterDepths[2],(kernel_size,kernel_size),
-            #        padding="same",activation = 'relu')(norm_25)
-            #norm_26 = BatchNormalization(momentum=0.99)(deConv_8)
-
-            #deConv_9 = Conv2DTranspose(filterDepths[2],(kernel_size,kernel_size),
-            #        padding="same",activation = 'relu')(norm_26)
-            #norm_27 = BatchNormalization(momentum=0.99)(deConv_9)
-
-
-            #Up pool concatenate and covolve twice. 4
-            #upPool_4 = UpSampling2D()(norm_27)
-            #merge_4 = Concatenate()([upPool_4, norm_6])
-
-            #deConv_10 = Conv2DTranspose(filterDepths[1],(kernel_size,kernel_size),
-            #        padding="same",activation = 'relu')(merge_4)
-            #norm_28 = BatchNormalization(momentum=0.99)(deConv_10)
-
-            #deConv_11 = Conv2DTranspose(filterDepths[1],(kernel_size,kernel_size),
-            #        padding="same",activation = 'relu')(norm_28)
-            #norm_29 = BatchNormalization(momentum=0.99)(deConv_11)
-
-            #deConv_12 = Conv2DTranspose(filterDepths[1],(kernel_size,kernel_size),
-            #        padding="same",activation = 'relu')(norm_29)
-            #norm_30 = BatchNormalization(momentum=0.99)(deConv_12)
-
-            #Up pool concatenate and covolve twice. 5
-            #upPool_5 = UpSampling2D()(norm_30)
-            #merge_5 = Concatenate()([upPool_5, norm_3])
-
-            #deConv_13 = Conv2DTranspose(filterDepths[0],(kernel_size,kernel_size),
-            #        padding="same",activation = 'relu')(merge_5)
-            #norm_31 = BatchNormalization(momentum=0.99)(deConv_13)
-
-            #deConv_14 = Conv2DTranspose(filterDepths[0],(kernel_size,kernel_size),
-            #        padding="same",activation = 'relu')(norm_31)
-            #norm_32 = BatchNormalization(momentum=0.99)(deConv_14)
-
-            #deConv_15 = Conv2DTranspose(filterDepths[0],(kernel_size,kernel_size),
-            #        padding="same",activation = 'relu')(norm_32)
-            #norm_33 = BatchNormalization(momentum=0.99)(deConv_15)
-
-
-            #Output
-            #out = Convolution2D(1,(kernel_size,kernel_size),activation='sigmoid'
-            #    ,padding='same')(norm_33)
-
-            #self.model = Model(inputs=inp, outputs=out)
-
     def compileModel(self):
-        if self.model != None:
-            #self.model.compile(loss='binary_crossentropy',
-            #        optimizer='adam', metrics=['accuracy'])
+        try:
             self.model.compile(loss='mean_squared_error',
                     optimizer='adam', metrics=['accuracy'])
-            print(self.model.summary())
-        else:
+        except AttributeError:
             print('Error: Tried to compile model which was undefined')
             sys.exit(0)
+        print(self.model.summary())
 
     def loadTrainingData(self,data,answers,rotateData=True):
         data = self.normaliseData(data)
         answers = answers
+        #Rotate and mirror date if required to pad out training data
         if rotateData:
             for i in range(len(data)):
                 for j in range(1,4):
@@ -279,8 +91,9 @@ class FullyConvNet:
                 data.append(np.flipud(data[i]))
                 answers.append(np.fliplr(answers[i]))
                 answers.append(np.flipud(answers[i]))
-
+        #Compute scores from answer frames
         scores = self.score(answers)
+        #Store data in class varibles
         if self.data == None and self.answers == None:
             self.data = [d for d in data]
             self.answers = [a for a in answers]
@@ -299,38 +112,32 @@ class FullyConvNet:
                     self.height,1)
             scores = np.asarray(self.scores,dtype='uint16')
             scores = np.swapaxes(scores,1,3 )
-            #hmmmm not sure about this next line
+            #Swap axis here so inage is not transposed relative to Training Data
             scores = np.swapaxes(scores,1,2 )
             early_stopping = EarlyStopping(monitor='val_loss', patience=3)
             self.model.fit(data, scores, batch_size=batch_size,
                     epochs=num_epochs, validation_split=0.1, verbose =1,
-                            callbacks= [early_stopping])
+                    callbacks= [early_stopping])
         else:
             print("Error data or answers not initialised!")
             sys.exit(0)
-        #self.data = None
-        #self.answers = None
 
     def predict(self,images,threshold=False,thresh=0.9):
         predictions = []
-        start = time.time()
         for image in images:
+            start = time.time()
             image = self.normaliseData([image])
             image = np.asarray(image).reshape(1,self.width,
                     self.height,1)
-            print("Starting Prediction", time.time()-start)
             predict = self.model.predict(image)
             i = 0
-            print("Prediction complete", time.time()-start)
+            print("Prediction completed in {}s".format(time.time()-start))
             predictImage = predict
             if threshold:
-                predictImage[predictImage>=0.9*thresh] = 1
-                predictImage[predictImage<0.9*thresh] = 0
+                predictImage[predictImage >= thresh] = 1
+                predictImage[predictImage < thresh] = 0
             predictions.append(predictImage[0,:,:,0])
-            #predictions.append(predictImage[0,:,:,1])
         return predictions
-
-
 
     def normaliseData(self,images):
         normalised = []
@@ -346,19 +153,67 @@ class FullyConvNet:
             image[image<=0.0] = 0
             cellScores = image
             backGroundScores = (image -1)*-1
-            #classScores.append(np.asarray([cellScores,backGroundScores]))
             classScores.append(np.asarray([cellScores]))
         return classScores
 
     def saveModel(self,path):
         self.model.save(path)
 
-    def loadModel(self,path):
+    def loadModel(self,prompt=True,path=None,title="Select Model"):
         del self.model
-        self.model = load_model(path)
+        if prompt:
+            pathToModel = self.getPathGUI(path,title,File=True)
+        else:
+            pathToModel = path
+        self.model = load_model(pathToModel)
 
     def loadImage(self,path):
         return np.asarray(imread(path),dtype='uint16')
 
+    def loadImagesFromFolder(self,prompt=True, path=None,title="Select folder"):
+        if prompt:
+            pathToImageFolder = self.getPathGUI(path,title)
+        else:
+            pathToImageFolder = path
+        imageNames = sorted(os.listdir(pathToImageFolder))
+        imagePaths = [os.path.join(pathToImageFolder,i) for i in imageNames]
+        images = [self.loadImage(i) for i in imagePaths]
+        return images, imageNames
+
     def saveImage(self,path,image):
         imsave(path,image)
+
+    def SaveImagesToFolder(self,images,imageNames,prompt=True,path=None,
+            title="Select folder to save to."):
+        if prompt:
+            pathToSaveFolder = self.getPathGUI(path,title)
+        else:
+            pathToSaveFolder = path
+        for i in range(len(images)):
+            self.saveImage(os.path.join(pathToSaveFolder,
+                    imageNames[i]),images[i])
+
+
+    def displayData(self,images,delay=0.5,cmap='gray',):
+        plt.ion()
+        for image in images:
+            plt.clf()
+            plt.imshow(image,interpolation='none',cmap=cmap)
+            plt.colorbar()
+            plt.pause(delay)
+        plt.close()
+
+    def getPathGUI(self,path=None,title="",File=False):
+        root = Tk()
+        if path == None:
+            path = "./"
+        if not File:
+            root.directory = tkFileDialog.askdirectory(initialdir = path,
+                    title=title)
+            pathToF = root.directory+"/"
+        else:
+            root.directory = tkFileDialog.askopenfilename(initialdir = path,
+                    title=title)
+            pathToF = root.directory
+        root.withdraw()
+        return pathToF
