@@ -52,7 +52,7 @@ class FullyConvNet:
             filterDepthsIn = [16,32,64]
             filterDepthsOut = filterDepthsIn[::-1]
             #Input layer
-            input_layer = Input(shape=(self.width,self.height,1))
+            input_layer = Input(shape=(self.height,self.width,1))
             #Encoding network
             concatenated_layers = []
             l1 = input_layer
@@ -82,10 +82,11 @@ class FullyConvNet:
         answers = answers
         #Rotate and mirror date if required to pad out training data
         if rotateData:
-            for i in range(len(data)):
-                for j in range(1,4):
-                    data.append(np.rot90(data[i],j))
-                    answers.append(np.rot90(answers[i],j))
+            if data[0].shape[0] == data[0].shape[1]:
+                for i in range(len(data)):
+                    for j in range(1,4):
+                        data.append(np.rot90(data[i],j))
+                        answers.append(np.rot90(answers[i],j))
             for i in range(len(data)):
                 data.append(np.fliplr(data[i]))
                 data.append(np.flipud(data[i]))
@@ -108,13 +109,13 @@ class FullyConvNet:
 
     def trainModel(self,batch_size=2, num_epochs=1):
         if self.data != None and self.answers != None and self.scores !=None:
-            data = np.asarray(self.data,dtype='uint16').reshape(len(self.data),self.width,
-                    self.height,1)
+            data = np.asarray(self.data,dtype='uint16').reshape(len(self.data),
+                    self.height, self.width,1)
             scores = np.asarray(self.scores,dtype='uint16')
             scores = np.swapaxes(scores,1,3 )
             #Swap axis here so inage is not transposed relative to Training Data
             scores = np.swapaxes(scores,1,2 )
-            early_stopping = EarlyStopping(monitor='val_loss', patience=3)
+            early_stopping = EarlyStopping(monitor='val_loss', patience=100)
             self.model.fit(data, scores, batch_size=batch_size,
                     epochs=num_epochs, validation_split=0.1, verbose =1,
                     callbacks= [early_stopping])
@@ -127,8 +128,8 @@ class FullyConvNet:
         for image in images:
             start = time.time()
             image = self.normaliseData([image])
-            image = np.asarray(image).reshape(1,self.width,
-                    self.height,1)
+            image = np.asarray(image).reshape(1,self.height,
+                    self.width,1)
             predict = self.model.predict(image)
             i = 0
             print("Prediction completed in {}s".format(time.time()-start))

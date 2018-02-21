@@ -1,13 +1,13 @@
 from FullyConvNet import FullyConvNet
-
+import numpy as np
 #Load or compile model and choose to run on CPU
-M1 = FullyConvNet(1024,1024,False)
+M1 = FullyConvNet(1296,1024,False)
 M1.defineModel()
 M1.compileModel()
 
 #Select Folders for training data answers and validation sets
-folderData = "Files/Input/TrainingData/Data"
-folderAnswers = "Files/Input/TrainingData/Answers"
+folderData = "Files/Input/TrainingData/Data_Mamalian"
+folderAnswers = "Files/Input/TrainingData/Answers_Mamalian"
 folderValidate = ("/run/user/1001/gvfs/smb-share:server=csce.datastore.ed.ac.uk"
     +",share=csce/biology/groups/pilizota/Leonardo_Castorina/"
     + "RDM_TunnelSlide_Slide2_2_Compilled")
@@ -15,17 +15,18 @@ outputModelsFolder = "Files/Models/TempModels"
 
 #Get traiing images and answers
 trainingData, _ = M1.loadImagesFromFolder(prompt=False,path=folderData)
+trainingData = [np.pad(i,((1024-966,0),(0,0)),"reflect") for i in trainingData]
 trainingAnswers, _ = M1.loadImagesFromFolder(prompt=False,path=folderAnswers)
-
+trainingAnswers = [np.pad(i,((1024-966,0),(0,0)),"reflect") for i in trainingAnswers]
 #Load model training data
-M1.loadTrainingData(trainingData,trainingAnswers)
+M1.loadTrainingData(trainingData,trainingAnswers,True)
 
 #Train for a user defined number of epochs saving model and showing predictions
 #each time
 epochs = int(raw_input("Epochs to train?"))
 while epochs>0:
     M1.trainModel(batch_size=3,num_epochs=epochs)
-    M1.saveModel("Files/Models/TempModels/MostRecent_FullyConvNetTempModel1.h5")
+    M1.saveModel("Files/Models/TempModels/MostRecent_FullyConvNetMamalian_1.h5")
     output = M1.predict(trainingData,threshold=False)
     shouldLoad = raw_input("Ready to see data?(Y)")
     M1.displayData(trainingData,delay=0.1)
