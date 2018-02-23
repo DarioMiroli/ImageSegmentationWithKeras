@@ -106,6 +106,7 @@ class FullyConvNet:
         else:
             print("Error: Only data or answers have been initialised")
             sys.exit(0)
+        self.displayData(self.answers,0.1)
 
     def trainModel(self,batch_size=2, num_epochs=1):
         if self.data != None and self.answers != None and self.scores !=None:

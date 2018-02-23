@@ -1,7 +1,7 @@
 from FullyConvNet import FullyConvNet
 import numpy as np
 #Load or compile model and choose to run on CPU
-M1 = FullyConvNet(1296,1024,False)
+M1 = FullyConvNet(512,512,False)
 M1.defineModel()
 M1.compileModel()
 
@@ -15,12 +15,11 @@ outputModelsFolder = "Files/Models/TempModels"
 
 #Get traiing images and answers
 trainingData, _ = M1.loadImagesFromFolder(prompt=False,path=folderData)
-trainingData = [np.pad(i,((1024-966,0),(0,0)),"reflect") for i in trainingData]
+trainingData = [x[250:250+512,250:250+512] for x in trainingData]
 trainingAnswers, _ = M1.loadImagesFromFolder(prompt=False,path=folderAnswers)
-trainingAnswers = [np.pad(i,((1024-966,0),(0,0)),"reflect") for i in trainingAnswers]
+trainingAnswers = [x[250:250+512,250:250+512] for x in trainingAnswers]
 #Load model training data
 M1.loadTrainingData(trainingData,trainingAnswers,True)
-
 #Train for a user defined number of epochs saving model and showing predictions
 #each time
 epochs = int(raw_input("Epochs to train?"))
