@@ -6,6 +6,7 @@ from keras.layers import Input, Convolution2D, MaxPooling2D
 from keras.layers import Dense, Dropout, Flatten, BatchNormalization
 from keras.layers import Conv2DTranspose, UpSampling2D, Add, Concatenate
 from keras.callbacks import EarlyStopping
+from keras.callbacks import History
 from scipy.ndimage import imread
 from scipy.misc import imsave
 from  Tkinter import *
@@ -25,6 +26,11 @@ class FullyConvNet:
         self.data = None
         self.answers = None
         self.scores = None
+        self.lossHist = []
+        self.accHist = []
+        self.valLossHist = []
+        self.valAccHist = []
+
         if not useGPU:
             os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
 
@@ -49,7 +55,17 @@ class FullyConvNet:
         return norm_layer
 
     def defineModel(self,kernel_size=3):
-            filterDepthsIn = [16,32,64]
+            #filterDepthsIn = [1,2,4]
+            #filterDepthsIn = [2,4,8]
+            #filterDepthsIn = [4,8,16]
+            filterDepthsIn = [8,16,32]
+            filterDepth = [1]
+            #filterDepthsIn = [16,32,64]
+            #filterDepthsIn = [32,64,128]
+            #filterDepthsIn = [64,128,256]
+            #filterDepthsIn = [80,160,320]
+            #filterDepthsIn = [128,256,512]
+
             filterDepthsOut = filterDepthsIn[::-1]
             #Input layer
             input_layer = Input(shape=(self.height,self.width,1))
@@ -65,7 +81,7 @@ class FullyConvNet:
             for i in range(len(filterDepthsOut)):
                 l1 = self.upBlock(l1,concatenated_layers[i],kernel_size, filterDepthsOut[i])
             #Output layer
-            output_Layer = Convolution2D(1,(1,1), padding='same',activation='sigmoid')(l1)
+            output_Layer = Convolution2D(1,(3,3), padding='same',activation='sigmoid')(l1)
             self.model = Model(inputs=input_layer, outputs=output_Layer)
 
     def compileModel(self):
@@ -106,20 +122,27 @@ class FullyConvNet:
         else:
             print("Error: Only data or answers have been initialised")
             sys.exit(0)
-        self.displayData(self.answers,0.1)
 
     def trainModel(self,batch_size=2, num_epochs=1):
         if self.data != None and self.answers != None and self.scores !=None:
-            data = np.asarray(self.data,dtype='uint16').reshape(len(self.data),
+            data = np.asarray(self.data,dtype='float16').reshape(len(self.data),
                     self.height, self.width,1)
-            scores = np.asarray(self.scores,dtype='uint16')
+            scores = np.asarray(self.scores,dtype='float16')
             scores = np.swapaxes(scores,1,3 )
             #Swap axis here so inage is not transposed relative to Training Data
             scores = np.swapaxes(scores,1,2 )
             early_stopping = EarlyStopping(monitor='val_loss', patience=100)
-            self.model.fit(data, scores, batch_size=batch_size,
+            hist = self.model.fit(data, scores, batch_size=batch_size,
                     epochs=num_epochs, validation_split=0.1, verbose =1,
                     callbacks= [early_stopping])
+            print(self.accHist)
+            print(hist.history["acc"])
+            self.accHist += hist.history["acc"]
+            print(self.accHist  )
+            self.lossHist += hist.history["loss"]
+            self.valAccHist += hist.history["val_acc"]
+            self.valLossHist += hist.history["val_loss"]
+
         else:
             print("Error data or answers not initialised!")
             sys.exit(0)
@@ -129,8 +152,7 @@ class FullyConvNet:
         for image in images:
             start = time.time()
             image = self.normaliseData([image])
-            image = np.asarray(image).reshape(1,self.height,
-                    self.width,1)
+            image = np.asarray(image).reshape(1,self.height,self.width,1)
             predict = self.model.predict(image)
             i = 0
             print("Prediction completed in {}s".format(time.time()-start))
@@ -144,7 +166,8 @@ class FullyConvNet:
     def normaliseData(self,images):
         normalised = []
         for image in images:
-            normal = image/(np.median(image))
+            #normal = image/(np.median(image))
+            normal = (image/np.median(image)*2)-1
             normalised.append(normal)
         return normalised
 
@@ -219,3 +242,15 @@ class FullyConvNet:
             pathToF = root.directory
         root.withdraw()
         return pathToF
+
+    def plotHistory(self):
+        plt.ioff()
+        plt.clf()
+        plt.plot(self.lossHist,label="loss")
+        plt.plot(self.valLossHist,label="val loss")
+        plt.legend()
+        plt.show()
+        plt.plot(self.accHist,label="Acc")
+        plt.plot(self.valAccHist,label="val acc")
+        plt.legend()
+        plt.show()
