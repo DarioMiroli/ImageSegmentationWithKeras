@@ -2,12 +2,26 @@ from keras.models import Model
 from keras.models import load_model
 from keras.layers import Input, Convolution2D, MaxPooling2D
 from keras.layers import Dense, Dropout, Flatten
-from scipy.ndimage import imread
-from scipy.misc import imsave
+try:
+    from scipy.ndimage import imread
+except:
+    from imageio import imread
+
+try:
+    from scipy.misc import imsave
+except:
+    from imageio import imsave
 import sys
 import numpy as np
 import time
 import gc
+from keras.callbacks import EarlyStopping
+from keras.callbacks import History
+import matplotlib.pyplot as plt
+from matplotlib import rc,rcParams
+rc('axes', linewidth=2)
+rc('font', weight='bold')
+
 
 class MachineSegmenter:
 
@@ -17,6 +31,10 @@ class MachineSegmenter:
         self.answers = None
         self.scores = None
         self.rfSize = 21
+        self.lossHist = []
+        self.accHist = []
+        self.valLossHist = []
+        self.valAccHist = []
 
     def defineModel(self, num_classes=2, kernel_size=3, pool_size=2,
             conv_depth_1=5, conv_depth_2=3, hidden_size=100, rfSize=21):
@@ -69,11 +87,16 @@ class MachineSegmenter:
 
     def trainModel(self,batch_size=10, num_epochs=1):
         if self.data != None and self.answers != None and self.scores !=None:
-            data = np.asarray(self.data,dtype='uint16').reshape(len(self.data),self.rfSize,
-                    self.rfSize,1)
+            data = np.asarray(self.data,dtype='uint16').reshape(len(self.data),self.rfSize,self.rfSize,1)
             scores = np.asarray(self.scores,dtype='uint16')
-            self.model.fit(data, scores, batch_size=batch_size,
-                    epochs=num_epochs, validation_split=0, verbose =1)
+            early_stopping = EarlyStopping(monitor='val_loss', patience=100)
+            hist = self.model.fit(data, scores, batch_size=batch_size,
+                    epochs=num_epochs, validation_split=0.1, verbose =1,
+                    callbacks= [early_stopping])
+            self.accHist += hist.history["acc"]
+            self.lossHist += hist.history["loss"]
+            self.valAccHist += hist.history["val_acc"]
+            self.valLossHist += hist.history["val_loss"]
         else:
             print("Error data or answers not initialised!")
             sys.exit(0)
@@ -134,7 +157,7 @@ class MachineSegmenter:
                 predictImage[predictImage>=0.9*thresh] = 1
                 predictImage[predictImage<0.9*thresh] = 0
             predictions.append(predictImage)
-            return predictions
+        return predictions
 
     def saveModel(self,path):
         self.model.save(path)
@@ -148,3 +171,29 @@ class MachineSegmenter:
 
     def saveImage(self,path,image):
         imsave(path,image)
+
+    def plotHistory(self):
+        plt.ioff()
+        plt.clf()
+        plt.close("all")
+        fig, ax = plt.subplots(nrows=1,ncols=1,figsize=(12,8))
+        ax.plot(self.lossHist,label="loss",linewidth=3)
+        ax.plot(self.valLossHist,label="validation loss",linewidth=3)
+        ax.legend(fontsize="xx-large")
+        ax.set_xlabel("Epoch",fontsize=25,weight="bold")
+        ax.set_ylabel("Loss",fontsize=25,weight="bold")
+        ax.tick_params(axis="y", labelsize=20)
+        ax.tick_params(axis="x", labelsize=20)
+        fig.tight_layout()
+        plt.show()
+        fig, ax = plt.subplots(nrows=1,ncols=1,figsize=(12,8))
+        ax.plot(self.accHist,label="Accuracy",linewidth=3)
+        ax.plot(self.valAccHist,label="validation accuracy",linewidth=3)
+        ax.legend(fontsize="xx-large")
+        ax.set_xlabel("Epoch",fontsize=25,weight="bold")
+        ax.set_ylabel("Accuracy (%)",fontsize=25,weight="bold")
+        ax.set_ylim(0.5,1)
+        ax.tick_params(axis="y", labelsize=20)
+        ax.tick_params(axis="x", labelsize=20)
+        fig.tight_layout()
+        plt.show()

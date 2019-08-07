@@ -1,5 +1,8 @@
 import numpy as np
 import matplotlib.pyplot as plt
+from matplotlib import rc,rcParams
+rc('axes', linewidth=2)
+rc('font', weight='bold')
 from keras.models import Model
 from keras.models import load_model
 from keras.layers import Input, Convolution2D, MaxPooling2D
@@ -7,10 +10,26 @@ from keras.layers import Dense, Dropout, Flatten, BatchNormalization
 from keras.layers import Conv2DTranspose, UpSampling2D, Add, Concatenate
 from keras.callbacks import EarlyStopping
 from keras.callbacks import History
-from scipy.ndimage import imread
-from scipy.misc import imsave
-from  Tkinter import *
-import Tkinter, Tkconstants, tkFileDialog
+try:
+    from scipy.ndimage import imread
+except:
+    from imageio import imread
+
+try:
+    from scipy.misc import imsave
+except:
+    from imageio import imsave
+try:
+    from  Tkinter import *
+except:
+    from tkinter import *
+try:
+    import Tkinter, Tkconstants, tkFileDialog
+except:
+    import tkinter
+    import tkinter.constants as Tkconstants
+    import tkinter.filedialog as tkFileDialog
+
 import sys
 import os
 import time
@@ -35,16 +54,16 @@ class FullyConvNet:
             os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
 
     def downBlock(self, layer, kernel_size, depth, repeat = 3):
-        l1 = layer
+        conv_layer = layer
         for i in range(repeat):
             conv_layer = Convolution2D(depth,(kernel_size,kernel_size),
-                    padding='same',activation='relu')(l1)
+                    padding='same',activation='relu')(conv_layer)
             norm_layer = BatchNormalization(momentum=0.99)(conv_layer)
         down_pool = MaxPooling2D(pool_size=(2, 2), strides=2)(norm_layer)
         return norm_layer, down_pool
 
     def upBlock(self, layer, concat_layer, kernel_size, depth, repeat=3):
-        upConvolve_layer = Conv2DTranspose(depth, (kernel_size,kernel_size),
+        upConvolve_layer = Conv2DTranspose(depth, (2,2),
                 strides=2, padding='same')(layer)
         concatenated_layer = Concatenate()([concat_layer, upConvolve_layer])
         norm_layer = BatchNormalization(momentum=0.99)(concatenated_layer)
@@ -57,8 +76,8 @@ class FullyConvNet:
     def defineModel(self,kernel_size=3):
             #filterDepthsIn = [1,2,4]
             #filterDepthsIn = [2,4,8]
-            #filterDepthsIn = [4,8,16]
-            filterDepthsIn = [8,16,32]
+            filterDepthsIn = [8,16,32,64,128]
+            #filterDepthsIn = [10,20,40,80,160]
             filterDepth = [1]
             #filterDepthsIn = [16,32,64]
             #filterDepthsIn = [32,64,128]
@@ -86,7 +105,7 @@ class FullyConvNet:
 
     def compileModel(self):
         try:
-            self.model.compile(loss='mean_squared_error',
+            self.model.compile(loss='binary_crossentropy',
                     optimizer='adam', metrics=['accuracy'])
         except AttributeError:
             print('Error: Tried to compile model which was undefined')
@@ -95,7 +114,9 @@ class FullyConvNet:
 
     def loadTrainingData(self,data,answers,rotateData=True):
         data = self.normaliseData(data)
+        #self.displayData(data)
         answers = answers
+        #self.displayData(answers,delay=2)
         #Rotate and mirror date if required to pad out training data
         if rotateData:
             if data[0].shape[0] == data[0].shape[1]:
@@ -167,7 +188,8 @@ class FullyConvNet:
         normalised = []
         for image in images:
             #normal = image/(np.median(image))
-            normal = (image/np.median(image)*2)-1
+            #normal = (image/np.median(image)*2)-1
+            normal = 2*((image-np.amin(image))/np.amax(image))-1
             normalised.append(normal)
         return normalised
 
@@ -191,6 +213,7 @@ class FullyConvNet:
         else:
             pathToModel = path
         self.model = load_model(pathToModel)
+        print(self.model.summary())
 
     def loadImage(self,path):
         return np.asarray(imread(path),dtype='uint16')
@@ -246,11 +269,25 @@ class FullyConvNet:
     def plotHistory(self):
         plt.ioff()
         plt.clf()
-        plt.plot(self.lossHist,label="loss")
-        plt.plot(self.valLossHist,label="val loss")
-        plt.legend()
+        plt.close("all")
+        fig, ax = plt.subplots(nrows=1,ncols=1,figsize=(12,8))
+        ax.plot(self.lossHist,label="loss",linewidth=3)
+        ax.plot(self.valLossHist,label="validation loss",linewidth=3)
+        ax.legend(fontsize="xx-large")
+        ax.set_xlabel("Epoch",fontsize=25,weight="bold")
+        ax.set_ylabel("Loss",fontsize=25,weight="bold")
+        ax.tick_params(axis="y", labelsize=20)
+        ax.tick_params(axis="x", labelsize=20)
+        fig.tight_layout()
         plt.show()
-        plt.plot(self.accHist,label="Acc")
-        plt.plot(self.valAccHist,label="val acc")
-        plt.legend()
+        fig, ax = plt.subplots(nrows=1,ncols=1,figsize=(12,8))
+        ax.plot(self.accHist,label="Accuracy",linewidth=3)
+        ax.plot(self.valAccHist,label="validation accuracy",linewidth=3)
+        ax.legend(fontsize="xx-large")
+        ax.set_xlabel("Epoch",fontsize=25,weight="bold")
+        ax.set_ylabel("Accuracy (%)",fontsize=25,weight="bold")
+        ax.set_ylim(0.5,1)
+        ax.tick_params(axis="y", labelsize=20)
+        ax.tick_params(axis="x", labelsize=20)
+        fig.tight_layout()
         plt.show()

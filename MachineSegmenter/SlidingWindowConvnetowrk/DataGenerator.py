@@ -4,7 +4,16 @@ from scipy.ndimage import rotate
 from scipy import signal
 from scipy.ndimage.filters import gaussian_filter
 import scipy.stats as stats
-from scipy.misc import imsave
+try:
+    from scipy.ndimage import imread
+except:
+    from imageio import imread
+
+try:
+    from scipy.misc import imsave
+except:
+    from imageio import imsave
+
 class DataGenerator:
 
     def __init__(self,seed):
@@ -90,6 +99,7 @@ class DataGenerator:
         plt.ion()
         for image in images:
             plt.clf()
+            image = np.asarray(image,dtype="float")
             plt.imshow(image,interpolation='none',cmap=cmap)
             plt.colorbar()
             plt.pause(delay)

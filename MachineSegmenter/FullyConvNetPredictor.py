@@ -4,13 +4,13 @@ import scipy.ndimage
 #Set up and load network using GPU
 #M1 = FullyConvNet(1024,1024,True)
 #Change this !!!!
-M1 = FullyConvNet(1024,1024,False)
+M1 = FullyConvNet(1024,1024,True)
 
 #Get Model
-M1.loadModel(prompt=False,path="./Files/Models/TempModels/MostRecent_Agar_Pads_Model.h5")
+M1.loadModel(prompt=False,path="./Files/Models/SavedModels/Good_Agar_Pad_Model.h5")
 
 #Select folder to analyse
-images, imageNames = M1.loadImagesFromFolder(prompt=False,path="/home/s1033855/Desktop/CorrectedTrainingImages/Leonardo_Uncorrected",title= "Select folder to analyse.")
+images, imageNames = M1.loadImagesFromFolder(prompt=False,path="./Files/Input/TrainingData/Data_AgarPads",title= "Select folder to analyse.")
 
 #Pad smaller iamges
 for i,image in enumerate(images):
