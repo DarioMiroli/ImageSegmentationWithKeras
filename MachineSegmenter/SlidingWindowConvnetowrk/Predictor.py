@@ -16,7 +16,7 @@ validateNames = sorted(os.listdir(folderValidate))
 outputFolder = "Output"
 imagePredictions = []
 images = []
-for f in validateNames:
+for f in [validateNames[0]]:
     image = M1.loadImage(os.path.join(folderValidate,f))
     images.append(image)
     imagePredictions = imagePredictions + M1.predict([image],threshold=True,thresh=0.5)

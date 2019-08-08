@@ -29,6 +29,7 @@ except:
     import tkinter
     import tkinter.constants as Tkconstants
     import tkinter.filedialog as tkFileDialog
+from keras.utils.vis_utils import plot_model
 
 import sys
 import os
@@ -53,7 +54,7 @@ class FullyConvNet:
         if not useGPU:
             os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
 
-    def downBlock(self, layer, kernel_size, depth, repeat = 3):
+    def downBlock(self, layer, kernel_size, depth, repeat = 2):
         conv_layer = layer
         for i in range(repeat):
             conv_layer = Convolution2D(depth,(kernel_size,kernel_size),
@@ -62,7 +63,7 @@ class FullyConvNet:
         down_pool = MaxPooling2D(pool_size=(2, 2), strides=2)(norm_layer)
         return norm_layer, down_pool
 
-    def upBlock(self, layer, concat_layer, kernel_size, depth, repeat=3):
+    def upBlock(self, layer, concat_layer, kernel_size, depth, repeat=2):
         upConvolve_layer = Conv2DTranspose(depth, (2,2),
                 strides=2, padding='same')(layer)
         concatenated_layer = Concatenate()([concat_layer, upConvolve_layer])
@@ -94,6 +95,10 @@ class FullyConvNet:
             for level in filterDepthsIn:
                 conc, l1 = self.downBlock(l1,kernel_size,level)
                 concatenated_layers.append(conc)
+
+            #for i in range(2):
+            #    l1 = Convolution2D(filterDepthsIn[-1],(kernel_size,kernel_size), padding='same',activation='relu')(l1)
+
             #Decoder network
             concatenated_layers.reverse()
 
@@ -107,6 +112,7 @@ class FullyConvNet:
         try:
             self.model.compile(loss='binary_crossentropy',
                     optimizer='adam', metrics=['accuracy'])
+            plot_model(self.model, to_file='./Files/Output/ModelSummaries/ModelSummary.png', show_shapes=True, show_layer_names=True)
         except AttributeError:
             print('Error: Tried to compile model which was undefined')
             sys.exit(0)

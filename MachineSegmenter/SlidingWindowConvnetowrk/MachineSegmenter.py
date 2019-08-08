@@ -21,7 +21,7 @@ import matplotlib.pyplot as plt
 from matplotlib import rc,rcParams
 rc('axes', linewidth=2)
 rc('font', weight='bold')
-
+from keras.utils.vis_utils import plot_model
 
 class MachineSegmenter:
 
@@ -42,25 +42,25 @@ class MachineSegmenter:
         inp = Input(shape=(rfSize,rfSize,1))
         conv_1 = Convolution2D(conv_depth_1,(kernel_size,kernel_size),
                 padding='same',activation='relu')(inp)
-        #conv_2 = Convolution2D(conv_depth_1,(kernel_size,kernel_size),
-        #        padding='same',activation='relu')(conv_1)
         pool_1 = MaxPooling2D(pool_size=(pool_size,pool_size))(conv_1)
         conv_2 = Convolution2D(conv_depth_2,(kernel_size,kernel_size),
                 padding='same',activation='relu')(pool_1)
-        conv_3 = Convolution2D(conv_depth_2,(kernel_size,kernel_size),
-                padding='same',activation='relu')(conv_2)
-        #conv_4 = Convolution2D(conv_depth_2, (kernel_size, kernel_size),
-        #        padding='same', activation='relu')(conv_3)
-        pool_2 = MaxPooling2D(pool_size=(pool_size, pool_size))(conv_3)
+        pool_2 = MaxPooling2D(pool_size=(pool_size, pool_size))(conv_2)
+        #conv_3 = Convolution2D(conv_depth_2,(kernel_size,kernel_size),
+        #        padding='same',activation='relu')(pool_2)
+        #pool_3 = MaxPooling2D(pool_size=(pool_size, pool_size))(conv_3)
         flat = Flatten()(pool_2)
         hidden = Dense(hidden_size, activation='relu')(flat)
-        out = Dense(num_classes, activation='softmax')(hidden)
+        hidden2 = Dense(int(hidden_size/2), activation='relu')(hidden)
+        out = Dense(num_classes, activation='softmax')(hidden2)
         self.model = Model(inputs=inp, outputs=out)
 
     def compileModel(self):
         if self.model != None:
             self.model.compile(loss='categorical_crossentropy',
                     optimizer='adam', metrics=['accuracy'])
+            plot_model(self.model, to_file='Output/ModelSummary.png', show_shapes=True, show_layer_names=True)
+
         else:
             print('Error: Tried to compile model which was undefined')
             sys.exit(0)
@@ -121,8 +121,8 @@ class MachineSegmenter:
     def normaliseData(self,images):
         normalised = []
         for image in images:
-            #normal = image/(np.median(image))
-            normal = 2*((image-np.amin(image))/np.amax(image))-1
+            normal = image/(np.median(image))
+            #normal = 2*((image-np.amin(image))/np.amax(image))-1
             normalised.append(normal)
         return normalised
 

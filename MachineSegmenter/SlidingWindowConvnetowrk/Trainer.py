@@ -8,14 +8,14 @@ import os
 #Run on CPU
 #os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
 M1 = MachineSegmenter()
-M1.defineModel(conv_depth_1 = 5, conv_depth_2=10,rfSize=21)
+M1.defineModel(conv_depth_1 = 10, conv_depth_2=20,rfSize=21)
 M1.compileModel()
 D1 = DataGenerator(1.0)
 
 #Generate Data
-folderData = "D:/Coding/Machinelearning/ImageSegmentationWithKeras/MachineSegmenter/Files/Input/TrainingData/Data_AgarPads"
-folderAnswers = "D:/Coding/Machinelearning/ImageSegmentationWithKeras/MachineSegmenter/Files/Input/TrainingData/Answers_AgarPads"
-folderValidate = "D:/Coding/Machinelearning/ImageSegmentationWithKeras/MachineSegmenter/Files/Input/Images"
+folderData = "../Files/Input/TrainingData/Data_AgarPads"
+folderAnswers = "../Files/Input/TrainingData/Answers_AgarPads"
+folderValidate = "../Files/Input/Images"
 outputFolder = "Files/Output"
 dataNames = sorted(os.listdir(folderData))
 answerNames = sorted(os.listdir(folderAnswers))
@@ -27,6 +27,8 @@ for i in range(len(dataNames)):
     trainingData = M1.loadImage(os.path.join(folderData,dataNames[i]))
     trainingImages.append(trainingData)
     trainingAnswers = M1.loadImage(os.path.join(folderAnswers,answerNames[i]))
+    #D1.displayData([trainingData],delay=0.5)
+    #D1.displayData([trainingAnswers],delay=0.5)
     #Threshold training Answers
     trainingAnswers[trainingAnswers>0] = 1
     M1.loadTrainingData([trainingData],[trainingAnswers])
