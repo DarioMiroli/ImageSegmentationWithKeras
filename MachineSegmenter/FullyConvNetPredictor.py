@@ -7,7 +7,8 @@ import scipy.ndimage
 M1 = FullyConvNet(1024,1024,True)
 
 #Get Model
-M1.loadModel(prompt=False,path="./Files/Models/SavedModels/Good_Agar_Pad_Model.h5")
+#M1.loadModel(prompt=False,path="./Files/Models/SavedModels/Good_Agar_Pad_Model.h5")
+M1.loadModel(prompt=False,path="./Files/Models/TempModels/MostRecent_Agar_Pads_Model.h5")
 
 #Select folder to analyse
 images, imageNames = M1.loadImagesFromFolder(prompt=False,path="./Files/Input/TrainingData/Data_AgarPads",title= "Select folder to analyse.")
@@ -34,13 +35,13 @@ for i,image in enumerate(images):
 #M1.displayData(images)
 
 #Predict
-predictions = M1.predict(images)
+predictions = M1.predict(images,threshold=False)
 
 results = []
 for i in range(len(images)):
     results.append(images[i])
     results.append(predictions[i])
-M1.displayData(results,delay =5)
+M1.displayData(results,delay =1)
 
 #Save images
 save = raw_input("Save images (y/n)?")

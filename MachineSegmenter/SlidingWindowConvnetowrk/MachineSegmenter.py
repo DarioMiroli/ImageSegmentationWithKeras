@@ -121,7 +121,8 @@ class MachineSegmenter:
     def normaliseData(self,images):
         normalised = []
         for image in images:
-            normal = image/(np.median(image))
+            #normal = image/(np.median(image))
+            normal = 2*((image-np.amin(image))/np.amax(image))-1
             normalised.append(normal)
         return normalised
 
