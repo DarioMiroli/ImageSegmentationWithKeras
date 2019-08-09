@@ -61,23 +61,24 @@ class FullyConvNet:
                     padding='same',activation='relu')(conv_layer)
             norm_layer = BatchNormalization(momentum=0.99)(conv_layer)
         down_pool = MaxPooling2D(pool_size=(2, 2), strides=2)(norm_layer)
+        down_pool = Dropout(0.5)(down_pool)
         return norm_layer, down_pool
 
     def upBlock(self, layer, concat_layer, kernel_size, depth, repeat=2):
         upConvolve_layer = Conv2DTranspose(depth, (2,2),
                 strides=2, padding='same')(layer)
-        concatenated_layer = Concatenate()([concat_layer, upConvolve_layer])
-        norm_layer = BatchNormalization(momentum=0.99)(concatenated_layer)
+        conv_layer = Concatenate()([concat_layer, upConvolve_layer])
         for i in range(repeat):
             conv_layer = Convolution2D(depth,(kernel_size,kernel_size),
-                    padding='same',activation='relu')(norm_layer)
-            norm_layer = BatchNormalization(momentum=0.99)(conv_layer)
+                    padding='same',activation='relu')(conv_layer)
+        norm_layer = BatchNormalization(momentum=0.99)(conv_layer)
+        norm_layer = Dropout(0.5)(norm_layer)
         return norm_layer
 
     def defineModel(self,kernel_size=3):
             #filterDepthsIn = [1,2,4]
             #filterDepthsIn = [2,4,8]
-            filterDepthsIn = [8,16,32,64,128]
+            filterDepthsIn = [16,32,64,128,256]
             #filterDepthsIn = [10,20,40,80,160]
             filterDepth = [1]
             #filterDepthsIn = [16,32,64]
@@ -96,8 +97,8 @@ class FullyConvNet:
                 conc, l1 = self.downBlock(l1,kernel_size,level)
                 concatenated_layers.append(conc)
 
-            #for i in range(2):
-            #    l1 = Convolution2D(filterDepthsIn[-1],(kernel_size,kernel_size), padding='same',activation='relu')(l1)
+            for i in range(2):
+                l1 = Convolution2D(filterDepthsIn[-1],(kernel_size,kernel_size), padding='same',activation='relu')(l1)
 
             #Decoder network
             concatenated_layers.reverse()
@@ -105,7 +106,7 @@ class FullyConvNet:
             for i in range(len(filterDepthsOut)):
                 l1 = self.upBlock(l1,concatenated_layers[i],kernel_size, filterDepthsOut[i])
             #Output layer
-            output_Layer = Convolution2D(1,(3,3), padding='same',activation='sigmoid')(l1)
+            output_Layer = Convolution2D(1,(1,1), padding='same',activation='sigmoid')(l1)
             self.model = Model(inputs=input_layer, outputs=output_Layer)
 
     def compileModel(self):

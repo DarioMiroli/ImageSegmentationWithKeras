@@ -11,7 +11,8 @@ M1 = FullyConvNet(1024,1024,True)
 M1.loadModel(prompt=False,path="./Files/Models/TempModels/MostRecent_Agar_Pads_Model.h5")
 
 #Select folder to analyse
-images, imageNames = M1.loadImagesFromFolder(prompt=False,path="./Files/Input/TrainingData/Data_AgarPads",title= "Select folder to analyse.")
+#images, imageNames = M1.loadImagesFromFolder(prompt=False,path="./Files/Input/TrainingData/Data_AgarPads",title= "Select folder to analyse.")
+images, imageNames = M1.loadImagesFromFolder(prompt=False,path="./Files/Input/Images",title= "Select folder to analyse.")
 
 #Pad smaller iamges
 for i,image in enumerate(images):
@@ -35,7 +36,7 @@ for i,image in enumerate(images):
 #M1.displayData(images)
 
 #Predict
-predictions = M1.predict(images,threshold=False)
+predictions = M1.predict(images,threshold=True,thresh=0.70)
 
 results = []
 for i in range(len(images)):
@@ -44,7 +45,11 @@ for i in range(len(images)):
 M1.displayData(results,delay =1)
 
 #Save images
-save = raw_input("Save images (y/n)?")
+try:
+    save = raw_input("Save images (y/n)?")
+except:
+    save = input("Save images (y/n)?")
+
 if save == 'y':
     M1.SaveImagesToFolder(images,imageNames,title="Select folder to save to.")
     imageNames = ["prediction"+i for i in imageNames]

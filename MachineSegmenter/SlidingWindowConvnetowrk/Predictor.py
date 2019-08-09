@@ -19,7 +19,7 @@ images = []
 for f in [validateNames[0]]:
     image = M1.loadImage(os.path.join(folderValidate,f))
     images.append(image)
-    imagePredictions = imagePredictions + M1.predict([image],threshold=True,thresh=0.5)
+    imagePredictions = imagePredictions + M1.predict([image],threshold=True,thresh=0.99)
 D1.displayData(images,3)
 D1.displayData(imagePredictions,3)
 

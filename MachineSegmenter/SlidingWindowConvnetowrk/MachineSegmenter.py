@@ -30,7 +30,7 @@ class MachineSegmenter:
         self.data = None
         self.answers = None
         self.scores = None
-        self.rfSize = 21
+        self.rfSize = 25
         self.lossHist = []
         self.accHist = []
         self.valLossHist = []
@@ -45,14 +45,14 @@ class MachineSegmenter:
         pool_1 = MaxPooling2D(pool_size=(pool_size,pool_size))(conv_1)
         conv_2 = Convolution2D(conv_depth_2,(kernel_size,kernel_size),
                 padding='same',activation='relu')(pool_1)
-        pool_2 = MaxPooling2D(pool_size=(pool_size, pool_size))(conv_2)
-        #conv_3 = Convolution2D(conv_depth_2,(kernel_size,kernel_size),
-        #        padding='same',activation='relu')(pool_2)
-        #pool_3 = MaxPooling2D(pool_size=(pool_size, pool_size))(conv_3)
-        flat = Flatten()(pool_2)
+        #pool_2 = MaxPooling2D(pool_size=(pool_size, pool_size))(conv_2)
+        conv_3 = Convolution2D(conv_depth_2,(kernel_size,kernel_size),
+                padding='same',activation='relu')(conv_2)
+        pool_3 = MaxPooling2D(pool_size=(pool_size, pool_size))(conv_3)
+        flat = Flatten()(pool_3)
         hidden = Dense(hidden_size, activation='relu')(flat)
-        hidden2 = Dense(int(hidden_size/2), activation='relu')(hidden)
-        out = Dense(num_classes, activation='softmax')(hidden2)
+        #hidden2 = Dense(int(hidden_size/2), activation='relu')(hidden)
+        out = Dense(num_classes, activation='softmax')(hidden)
         self.model = Model(inputs=inp, outputs=out)
 
     def compileModel(self):
