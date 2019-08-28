@@ -5,7 +5,7 @@ import sys
 import os
 
 
-os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
+#os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
 M1 = MachineSegmenter()
 M1.loadModel("./Models/SlidingWindowModel.h5")
 M1.compileModel()
@@ -16,10 +16,10 @@ validateNames = sorted(os.listdir(folderValidate))
 outputFolder = "Output"
 imagePredictions = []
 images = []
-for f in [validateNames[0]]:
+for f in validateNames:
     image = M1.loadImage(os.path.join(folderValidate,f))
     images.append(image)
-    imagePredictions = imagePredictions + M1.predict([image],threshold=True,thresh=0.99)
+    imagePredictions = imagePredictions + M1.predict([image],threshold=False)
 D1.displayData(images,3)
 D1.displayData(imagePredictions,3)
 

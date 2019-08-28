@@ -1,7 +1,7 @@
 from keras.models import Model
 from keras.models import load_model
 from keras.layers import Input, Convolution2D, MaxPooling2D
-from keras.layers import Dense, Dropout, Flatten
+from keras.layers import Dense, Dropout, Flatten, BatchNormalization
 try:
     from scipy.ndimage import imread
 except:
@@ -37,20 +37,25 @@ class MachineSegmenter:
         self.valAccHist = []
 
     def defineModel(self, num_classes=2, kernel_size=3, pool_size=2,
-            conv_depth_1=5, conv_depth_2=3, hidden_size=100, rfSize=21):
+            conv_depth_1=5, conv_depth_2=3, hidden_size=100, rfSize=25):
         self.rfSize = rfSize
         inp = Input(shape=(rfSize,rfSize,1))
         conv_1 = Convolution2D(conv_depth_1,(kernel_size,kernel_size),
                 padding='same',activation='relu')(inp)
         pool_1 = MaxPooling2D(pool_size=(pool_size,pool_size))(conv_1)
+        pool_1 = BatchNormalization(momentum=0.99)(pool_1)
         conv_2 = Convolution2D(conv_depth_2,(kernel_size,kernel_size),
                 padding='same',activation='relu')(pool_1)
+        #conv_2 = BatchNormalization(momentum=0.99)(conv_2)
         #pool_2 = MaxPooling2D(pool_size=(pool_size, pool_size))(conv_2)
-        conv_3 = Convolution2D(conv_depth_2,(kernel_size,kernel_size),
-                padding='same',activation='relu')(conv_2)
-        pool_3 = MaxPooling2D(pool_size=(pool_size, pool_size))(conv_3)
+        #conv_3 = Convolution2D(conv_depth_2,(kernel_size,kernel_size),
+        #        padding='same',activation='relu')(conv_2)
+        pool_3 = MaxPooling2D(pool_size=(pool_size, pool_size))(conv_2)
+        pool_3 = BatchNormalization(momentum=0.99)(pool_3)
         flat = Flatten()(pool_3)
+        flat = BatchNormalization(momentum=0.99)(flat)
         hidden = Dense(hidden_size, activation='relu')(flat)
+        hidden = BatchNormalization(momentum=0.99)(hidden)
         #hidden2 = Dense(int(hidden_size/2), activation='relu')(hidden)
         out = Dense(num_classes, activation='softmax')(hidden)
         self.model = Model(inputs=inp, outputs=out)
@@ -60,6 +65,8 @@ class MachineSegmenter:
             self.model.compile(loss='categorical_crossentropy',
                     optimizer='adam', metrics=['accuracy'])
             plot_model(self.model, to_file='Output/ModelSummary.png', show_shapes=True, show_layer_names=True)
+            print(self.model.summary())
+
 
         else:
             print('Error: Tried to compile model which was undefined')
@@ -87,8 +94,8 @@ class MachineSegmenter:
 
     def trainModel(self,batch_size=10, num_epochs=1):
         if self.data != None and self.answers != None and self.scores !=None:
-            data = np.asarray(self.data,dtype='uint16').reshape(len(self.data),self.rfSize,self.rfSize,1)
-            scores = np.asarray(self.scores,dtype='uint16')
+            data = np.asarray(self.data,dtype='uint8').reshape(len(self.data),self.rfSize,self.rfSize,1)
+            scores = np.asarray(self.scores,dtype='uint8')
             early_stopping = EarlyStopping(monitor='val_loss', patience=100)
             hist = self.model.fit(data, scores, batch_size=batch_size,
                     epochs=num_epochs, validation_split=0.1, verbose =1,
@@ -121,8 +128,16 @@ class MachineSegmenter:
     def normaliseData(self,images):
         normalised = []
         for image in images:
-            normal = image/(np.median(image))
-            #normal = 2*((image-np.amin(image))/np.amax(image))-1
+            print(np.amax(image))
+            normal =(image/np.amax(image)*255)
+            #plt.clf()
+            #plt.imshow(normal,cmap="gray")
+            #plt.colorbar()
+            #plt.show()
+            #plt.pause(0.05)
+            print(np.amax(normal))
+
+            #normal = ((image-np.amin(image))/np.amax(image))
             normalised.append(normal)
         return normalised
 
@@ -171,6 +186,7 @@ class MachineSegmenter:
         return np.asarray(imread(path),dtype='uint16')
 
     def saveImage(self,path,image):
+        image = np.asarray( (image*255)  ,dtype="uint8" )
         imsave(path,image)
 
     def plotHistory(self):

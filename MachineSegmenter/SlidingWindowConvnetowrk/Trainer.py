@@ -6,9 +6,9 @@ import os
 
 #Load or compile model
 #Run on CPU
-os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
+#os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
 M1 = MachineSegmenter()
-M1.defineModel(conv_depth_1 = 10, conv_depth_2=20,rfSize=21)
+M1.defineModel(conv_depth_1 = 100, conv_depth_2=200,rfSize=25)
 M1.compileModel()
 D1 = DataGenerator(1.0)
 
@@ -31,11 +31,12 @@ for i in range(len(dataNames)):
     #D1.displayData([trainingAnswers],delay=0.5)
     #Threshold training Answers
     trainingAnswers[trainingAnswers>0] = 1
+    #D1.displayData([trainingAnswers],delay=1)
     M1.loadTrainingData([trainingData],[trainingAnswers])
-M1.trainModel(batch_size=1000,num_epochs=1)
+M1.trainModel(batch_size=1000,num_epochs=25)
 
 M1.saveModel("Models/SlidingWindowModel.h5")
-output = M1.predict(trainingImages,threshold=True)
+output = M1.predict(trainingImages,threshold=False)
 try:
     shouldLoad = raw_input("Ready to see data? (Y)")
 except:
